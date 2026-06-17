@@ -1,0 +1,5 @@
+changeLogFile=db/changelogs/master.xml
+url=jdbc:postgresql://localhost:5432/postgres
+username=postgres
+password=Rahitech@2024
+defaultSchemaName=loan_document_verification

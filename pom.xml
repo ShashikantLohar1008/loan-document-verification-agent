@@ -11,7 +11,7 @@
 	<groupId>com.shashikant</groupId>
 	<artifactId>banking-document-verification-agent</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>banking-document-verification-agent</name>
+	<name>loan-document-verification-agent</name>
 	<description>
 		AI-powered banking document verification system using OCR and Spring AI
 	</description>

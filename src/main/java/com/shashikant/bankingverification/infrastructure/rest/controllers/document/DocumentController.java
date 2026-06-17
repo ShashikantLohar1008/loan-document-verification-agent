@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.shashikant.bankingverification.application.document.DocumentService;
-import com.shashikant.bankingverification.infrastructure.rest.dto.document.DocumentCreateRequest;
-import com.shashikant.bankingverification.infrastructure.rest.dto.document.DocumentResponse;
+import com.shashikant.bankingverification.infrastructure.rest.dto.document.DocumentCreateRequestDTO;
+import com.shashikant.bankingverification.infrastructure.rest.dto.document.DocumentResponseDTO;
 
 import jakarta.validation.Valid;
 
@@ -29,8 +29,8 @@ public class DocumentController {
     }
 
     @PostMapping
-    public ResponseEntity<DocumentResponse> createDocument(@Valid @RequestBody DocumentCreateRequest request) {
-        DocumentResponse response = documentService.createDocument(request);
+    public ResponseEntity<DocumentResponseDTO> createDocument(@Valid @RequestBody DocumentCreateRequestDTO request) {
+        DocumentResponseDTO response = documentService.createDocument(request);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(response.getId())
@@ -40,12 +40,12 @@ public class DocumentController {
     }
 
     @GetMapping
-    public ResponseEntity<List<DocumentResponse>> getDocuments() {
+    public ResponseEntity<List<DocumentResponseDTO>> getDocuments() {
         return ResponseEntity.ok(documentService.getDocuments());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DocumentResponse> getDocumentById(@PathVariable Long id) {
+    public ResponseEntity<DocumentResponseDTO> getDocumentById(@PathVariable Long id) {
         return ResponseEntity.ok(documentService.getDocumentById(id));
     }
 }

@@ -5,9 +5,11 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.shashikant.bankingverification.domain.document.DocumentStatus;
 import com.shashikant.bankingverification.domain.document.DocumentType;
+import com.shashikant.bankingverification.infrastructure.files.document.StoredDocumentFile;
 import com.shashikant.bankingverification.infrastructure.persistence.entities.document.DocumentEntity;
 import com.shashikant.bankingverification.infrastructure.persistence.repositories.document.DocumentRepository;
 import com.shashikant.bankingverification.infrastructure.rest.dto.document.DocumentCreateRequestDTO;
@@ -18,9 +20,11 @@ import com.shashikant.bankingverification.shared.exception.ResourceNotFoundExcep
 public class DocumentServiceImpl implements DocumentService {
 
     private final DocumentRepository documentRepository;
+    private final DocumentStorageService documentStorageService;
 
-    public DocumentServiceImpl(DocumentRepository documentRepository) {
+    public DocumentServiceImpl(DocumentRepository documentRepository, DocumentStorageService documentStorageService) {
         this.documentRepository = documentRepository;
+        this.documentStorageService = documentStorageService;
     }
 
     @Override
@@ -31,6 +35,25 @@ public class DocumentServiceImpl implements DocumentService {
         documentEntity.setOriginalFileName(request.getOriginalFileName());
         documentEntity.setDocumentType(request.getDocumentType().name());
         documentEntity.setDocumentStatus(DocumentStatus.UPLOADED.name());
+        documentEntity.setUploadedAt(Instant.now());
+
+        DocumentEntity savedDocument = documentRepository.save(documentEntity);
+        return toResponse(savedDocument);
+    }
+
+    @Override
+    @Transactional
+    public DocumentResponseDTO uploadDocument(MultipartFile file, DocumentType documentType) {
+        StoredDocumentFile storedDocumentFile = documentStorageService.store(file);
+
+        DocumentEntity documentEntity = new DocumentEntity();
+        documentEntity.setFileName(storedDocumentFile.fileName());
+        documentEntity.setOriginalFileName(storedDocumentFile.originalFileName());
+        documentEntity.setDocumentType(documentType.name());
+        documentEntity.setDocumentStatus(DocumentStatus.UPLOADED.name());
+        documentEntity.setContentType(storedDocumentFile.contentType());
+        documentEntity.setFileSize(storedDocumentFile.fileSize());
+        documentEntity.setStoragePath(storedDocumentFile.storagePath());
         documentEntity.setUploadedAt(Instant.now());
 
         DocumentEntity savedDocument = documentRepository.save(documentEntity);
@@ -62,6 +85,8 @@ public class DocumentServiceImpl implements DocumentService {
         response.setOriginalFileName(documentEntity.getOriginalFileName());
         response.setDocumentType(DocumentType.valueOf(documentEntity.getDocumentType()));
         response.setDocumentStatus(DocumentStatus.valueOf(documentEntity.getDocumentStatus()));
+        response.setContentType(documentEntity.getContentType());
+        response.setFileSize(documentEntity.getFileSize());
         response.setUploadedAt(documentEntity.getUploadedAt());
         return response;
     }

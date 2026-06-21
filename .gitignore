@@ -39,3 +39,4 @@ target/
 .project
 *.log
 .env
+uploads/

@@ -30,6 +30,15 @@ public class DocumentEntity {
     @Column(name = "document_status", nullable = false)
     private String documentStatus;
 
+    @Column(name = "content_type")
+    private String contentType;
+
+    @Column(name = "file_size")
+    private Long fileSize;
+
+    @Column(name = "storage_path")
+    private String storagePath;
+
     @Column(name = "uploaded_at", nullable = false)
     private Instant uploadedAt;
 
@@ -71,6 +80,30 @@ public class DocumentEntity {
 
     public void setDocumentStatus(String documentStatus) {
         this.documentStatus = documentStatus;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(Long fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    public String getStoragePath() {
+        return storagePath;
+    }
+
+    public void setStoragePath(String storagePath) {
+        this.storagePath = storagePath;
     }
 
     public Instant getUploadedAt() {

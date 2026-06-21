@@ -5,4 +5,5 @@
                         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.10.xsd">
 
     <include file="ddl/001-documents.xml" relativeToChangelogFile="true"/>
+    <include file="ddl/002-document-upload-metadata.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

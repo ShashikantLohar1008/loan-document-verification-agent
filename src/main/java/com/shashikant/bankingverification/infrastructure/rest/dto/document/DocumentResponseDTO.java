@@ -12,6 +12,8 @@ public class DocumentResponseDTO {
     private String originalFileName;
     private DocumentType documentType;
     private DocumentStatus documentStatus;
+    private String contentType;
+    private Long fileSize;
     private Instant uploadedAt;
 
     public Long getId() {
@@ -52,6 +54,22 @@ public class DocumentResponseDTO {
 
     public void setDocumentStatus(DocumentStatus documentStatus) {
         this.documentStatus = documentStatus;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(Long fileSize) {
+        this.fileSize = fileSize;
     }
 
     public Instant getUploadedAt() {

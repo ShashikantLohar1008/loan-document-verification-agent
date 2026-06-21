@@ -6,5 +6,4 @@
 
     <include file="ddl/001-documents.xml" relativeToChangelogFile="true"/>
     <include file="ddl/002-document-upload-metadata.xml" relativeToChangelogFile="true"/>
-    <include file="ddl/003-document-ocr.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

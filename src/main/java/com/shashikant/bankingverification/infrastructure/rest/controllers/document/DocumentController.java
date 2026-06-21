@@ -18,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.shashikant.bankingverification.application.document.DocumentService;
 import com.shashikant.bankingverification.domain.document.DocumentType;
 import com.shashikant.bankingverification.infrastructure.rest.dto.document.DocumentCreateRequestDTO;
-import com.shashikant.bankingverification.infrastructure.rest.dto.document.DocumentOcrResponseDTO;
 import com.shashikant.bankingverification.infrastructure.rest.dto.document.DocumentResponseDTO;
 
 import jakarta.validation.Valid;
@@ -64,15 +63,5 @@ public class DocumentController {
     @GetMapping("/{id}")
     public ResponseEntity<DocumentResponseDTO> getDocumentById(@PathVariable Long id) {
         return ResponseEntity.ok(documentService.getDocumentById(id));
-    }
-
-    @PostMapping("/{id}/ocr")
-    public ResponseEntity<DocumentOcrResponseDTO> extractOcr(@PathVariable Long id) {
-        return ResponseEntity.ok(documentService.extractOcr(id));
-    }
-
-    @GetMapping("/{id}/ocr")
-    public ResponseEntity<DocumentOcrResponseDTO> getOcr(@PathVariable Long id) {
-        return ResponseEntity.ok(documentService.getOcr(id));
     }
 }

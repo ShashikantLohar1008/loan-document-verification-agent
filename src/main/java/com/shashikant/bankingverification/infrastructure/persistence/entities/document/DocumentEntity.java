@@ -39,6 +39,18 @@ public class DocumentEntity {
     @Column(name = "storage_path")
     private String storagePath;
 
+    @Column(name = "ocr_status")
+    private String ocrStatus;
+
+    @Column(name = "ocr_text")
+    private String ocrText;
+
+    @Column(name = "ocr_processed_at")
+    private Instant ocrProcessedAt;
+
+    @Column(name = "ocr_error_message")
+    private String ocrErrorMessage;
+
     @Column(name = "uploaded_at", nullable = false)
     private Instant uploadedAt;
 
@@ -104,6 +116,38 @@ public class DocumentEntity {
 
     public void setStoragePath(String storagePath) {
         this.storagePath = storagePath;
+    }
+
+    public String getOcrStatus() {
+        return ocrStatus;
+    }
+
+    public void setOcrStatus(String ocrStatus) {
+        this.ocrStatus = ocrStatus;
+    }
+
+    public String getOcrText() {
+        return ocrText;
+    }
+
+    public void setOcrText(String ocrText) {
+        this.ocrText = ocrText;
+    }
+
+    public Instant getOcrProcessedAt() {
+        return ocrProcessedAt;
+    }
+
+    public void setOcrProcessedAt(Instant ocrProcessedAt) {
+        this.ocrProcessedAt = ocrProcessedAt;
+    }
+
+    public String getOcrErrorMessage() {
+        return ocrErrorMessage;
+    }
+
+    public void setOcrErrorMessage(String ocrErrorMessage) {
+        this.ocrErrorMessage = ocrErrorMessage;
     }
 
     public Instant getUploadedAt() {

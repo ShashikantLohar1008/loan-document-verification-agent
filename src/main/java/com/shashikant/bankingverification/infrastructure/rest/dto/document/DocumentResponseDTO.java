@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import com.shashikant.bankingverification.domain.document.DocumentStatus;
 import com.shashikant.bankingverification.domain.document.DocumentType;
+import com.shashikant.bankingverification.domain.document.OcrStatus;
 
 public class DocumentResponseDTO {
 
@@ -14,6 +15,8 @@ public class DocumentResponseDTO {
     private DocumentStatus documentStatus;
     private String contentType;
     private Long fileSize;
+    private OcrStatus ocrStatus;
+    private Instant ocrProcessedAt;
     private Instant uploadedAt;
 
     public Long getId() {
@@ -70,6 +73,22 @@ public class DocumentResponseDTO {
 
     public void setFileSize(Long fileSize) {
         this.fileSize = fileSize;
+    }
+
+    public OcrStatus getOcrStatus() {
+        return ocrStatus;
+    }
+
+    public void setOcrStatus(OcrStatus ocrStatus) {
+        this.ocrStatus = ocrStatus;
+    }
+
+    public Instant getOcrProcessedAt() {
+        return ocrProcessedAt;
+    }
+
+    public void setOcrProcessedAt(Instant ocrProcessedAt) {
+        this.ocrProcessedAt = ocrProcessedAt;
     }
 
     public Instant getUploadedAt() {

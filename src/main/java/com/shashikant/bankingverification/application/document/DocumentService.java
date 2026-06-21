@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.shashikant.bankingverification.domain.document.DocumentType;
 import com.shashikant.bankingverification.infrastructure.rest.dto.document.DocumentCreateRequestDTO;
+import com.shashikant.bankingverification.infrastructure.rest.dto.document.DocumentOcrResponseDTO;
 import com.shashikant.bankingverification.infrastructure.rest.dto.document.DocumentResponseDTO;
 
 public interface DocumentService {
@@ -17,4 +18,8 @@ public interface DocumentService {
     List<DocumentResponseDTO> getDocuments();
 
     DocumentResponseDTO getDocumentById(Long documentKey);
+
+    DocumentOcrResponseDTO extractOcr(Long documentKey);
+
+    DocumentOcrResponseDTO getOcr(Long documentKey);
 }

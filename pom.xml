@@ -71,6 +71,26 @@
         <version>2.8.9</version>
     </dependency>
 
+    <!-- OCR -->
+    <dependency>
+        <groupId>net.sourceforge.tess4j</groupId>
+        <artifactId>tess4j</artifactId>
+        <version>5.13.0</version>
+    </dependency>
+
+    <!-- PDF Rendering for OCR -->
+    <dependency>
+        <groupId>org.apache.pdfbox</groupId>
+        <artifactId>pdfbox</artifactId>
+        <version>3.0.5</version>
+        <exclusions>
+            <exclusion>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+
     <!-- Testing -->
     <dependency>
         <groupId>org.springframework.boot</groupId>

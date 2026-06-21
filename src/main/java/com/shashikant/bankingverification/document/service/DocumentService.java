@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.shashikant.bankingverification.document.dto.DocumentCreateRequestDTO;
+import com.shashikant.bankingverification.document.dto.DocumentClassificationResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentOcrResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentResponseDTO;
 import com.shashikant.bankingverification.document.enums.DocumentType;
@@ -22,4 +23,8 @@ public interface DocumentService {
     DocumentOcrResponseDTO extractOcr(Long documentKey);
 
     DocumentOcrResponseDTO getOcr(Long documentKey);
+
+    DocumentClassificationResponseDTO classifyDocument(Long documentKey);
+
+    DocumentClassificationResponseDTO getClassification(Long documentKey);
 }

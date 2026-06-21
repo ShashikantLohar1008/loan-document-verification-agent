@@ -10,10 +10,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.shashikant.bankingverification.common.exception.BadRequestException;
 import com.shashikant.bankingverification.common.exception.ResourceNotFoundException;
+import com.shashikant.bankingverification.document.classification.DocumentClassificationResult;
+import com.shashikant.bankingverification.document.classification.DocumentClassificationService;
 import com.shashikant.bankingverification.document.dto.DocumentCreateRequestDTO;
+import com.shashikant.bankingverification.document.dto.DocumentClassificationResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentOcrResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentResponseDTO;
 import com.shashikant.bankingverification.document.entity.DocumentEntity;
+import com.shashikant.bankingverification.document.enums.ClassificationStatus;
 import com.shashikant.bankingverification.document.enums.DocumentStatus;
 import com.shashikant.bankingverification.document.enums.DocumentType;
 import com.shashikant.bankingverification.document.enums.OcrStatus;
@@ -26,12 +30,14 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentRepository documentRepository;
     private final DocumentStorageService documentStorageService;
     private final OcrExtractionService ocrExtractionService;
+    private final DocumentClassificationService documentClassificationService;
 
     public DocumentServiceImpl(DocumentRepository documentRepository, DocumentStorageService documentStorageService,
-            OcrExtractionService ocrExtractionService) {
+            OcrExtractionService ocrExtractionService, DocumentClassificationService documentClassificationService) {
         this.documentRepository = documentRepository;
         this.documentStorageService = documentStorageService;
         this.ocrExtractionService = ocrExtractionService;
+        this.documentClassificationService = documentClassificationService;
     }
 
     @Override
@@ -43,6 +49,7 @@ public class DocumentServiceImpl implements DocumentService {
         documentEntity.setDocumentType(request.getDocumentType().name());
         documentEntity.setDocumentStatus(DocumentStatus.UPLOADED.name());
         documentEntity.setOcrStatus(OcrStatus.PENDING.name());
+        documentEntity.setClassificationStatus(ClassificationStatus.PENDING.name());
         documentEntity.setUploadedAt(Instant.now());
 
         DocumentEntity savedDocument = documentRepository.save(documentEntity);
@@ -63,6 +70,7 @@ public class DocumentServiceImpl implements DocumentService {
         documentEntity.setFileSize(storedDocumentFile.fileSize());
         documentEntity.setStoragePath(storedDocumentFile.storagePath());
         documentEntity.setOcrStatus(OcrStatus.PENDING.name());
+        documentEntity.setClassificationStatus(ClassificationStatus.PENDING.name());
         documentEntity.setUploadedAt(Instant.now());
 
         DocumentEntity savedDocument = documentRepository.save(documentEntity);
@@ -120,6 +128,30 @@ public class DocumentServiceImpl implements DocumentService {
         return toOcrResponse(findDocumentEntity(documentKey));
     }
 
+    @Override
+    @Transactional
+    public DocumentClassificationResponseDTO classifyDocument(Long documentKey) {
+        DocumentEntity documentEntity = findDocumentEntity(documentKey);
+        if (documentEntity.getOcrText() == null || documentEntity.getOcrText().isBlank()) {
+            throw new BadRequestException("Classification requires completed OCR text");
+        }
+
+        DocumentClassificationResult classificationResult = documentClassificationService.classify(documentEntity.getOcrText());
+        documentEntity.setClassificationStatus(ClassificationStatus.COMPLETED.name());
+        documentEntity.setClassifiedDocumentType(classificationResult.getDocumentType().name());
+        documentEntity.setClassificationConfidence(classificationResult.getConfidence());
+        documentEntity.setClassificationReason(truncate(classificationResult.getReason(), 1000));
+        documentEntity.setClassifiedAt(Instant.now());
+
+        return toClassificationResponse(documentEntity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DocumentClassificationResponseDTO getClassification(Long documentKey) {
+        return toClassificationResponse(findDocumentEntity(documentKey));
+    }
+
     private DocumentEntity findDocumentEntity(Long documentKey) {
         return documentRepository.findById(documentKey)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found with id: " + documentKey));
@@ -138,6 +170,14 @@ public class DocumentServiceImpl implements DocumentService {
             response.setOcrStatus(OcrStatus.valueOf(documentEntity.getOcrStatus()));
         }
         response.setOcrProcessedAt(documentEntity.getOcrProcessedAt());
+        if (documentEntity.getClassificationStatus() != null) {
+            response.setClassificationStatus(ClassificationStatus.valueOf(documentEntity.getClassificationStatus()));
+        }
+        if (documentEntity.getClassifiedDocumentType() != null) {
+            response.setClassifiedDocumentType(DocumentType.valueOf(documentEntity.getClassifiedDocumentType()));
+        }
+        response.setClassificationConfidence(documentEntity.getClassificationConfidence());
+        response.setClassifiedAt(documentEntity.getClassifiedAt());
         response.setUploadedAt(documentEntity.getUploadedAt());
         return response;
     }
@@ -151,6 +191,21 @@ public class DocumentServiceImpl implements DocumentService {
         response.setExtractedText(documentEntity.getOcrText());
         response.setProcessedAt(documentEntity.getOcrProcessedAt());
         response.setErrorMessage(documentEntity.getOcrErrorMessage());
+        return response;
+    }
+
+    private DocumentClassificationResponseDTO toClassificationResponse(DocumentEntity documentEntity) {
+        DocumentClassificationResponseDTO response = new DocumentClassificationResponseDTO();
+        response.setDocumentId(documentEntity.getDocumentKey());
+        if (documentEntity.getClassificationStatus() != null) {
+            response.setClassificationStatus(ClassificationStatus.valueOf(documentEntity.getClassificationStatus()));
+        }
+        if (documentEntity.getClassifiedDocumentType() != null) {
+            response.setClassifiedDocumentType(DocumentType.valueOf(documentEntity.getClassifiedDocumentType()));
+        }
+        response.setConfidence(documentEntity.getClassificationConfidence());
+        response.setReason(documentEntity.getClassificationReason());
+        response.setClassifiedAt(documentEntity.getClassifiedAt());
         return response;
     }
 

@@ -51,6 +51,21 @@ public class DocumentEntity {
     @Column(name = "ocr_error_message")
     private String ocrErrorMessage;
 
+    @Column(name = "classification_status")
+    private String classificationStatus;
+
+    @Column(name = "classified_document_type")
+    private String classifiedDocumentType;
+
+    @Column(name = "classification_confidence")
+    private Double classificationConfidence;
+
+    @Column(name = "classification_reason")
+    private String classificationReason;
+
+    @Column(name = "classified_at")
+    private Instant classifiedAt;
+
     @Column(name = "uploaded_at", nullable = false)
     private Instant uploadedAt;
 
@@ -148,6 +163,46 @@ public class DocumentEntity {
 
     public void setOcrErrorMessage(String ocrErrorMessage) {
         this.ocrErrorMessage = ocrErrorMessage;
+    }
+
+    public String getClassificationStatus() {
+        return classificationStatus;
+    }
+
+    public void setClassificationStatus(String classificationStatus) {
+        this.classificationStatus = classificationStatus;
+    }
+
+    public String getClassifiedDocumentType() {
+        return classifiedDocumentType;
+    }
+
+    public void setClassifiedDocumentType(String classifiedDocumentType) {
+        this.classifiedDocumentType = classifiedDocumentType;
+    }
+
+    public Double getClassificationConfidence() {
+        return classificationConfidence;
+    }
+
+    public void setClassificationConfidence(Double classificationConfidence) {
+        this.classificationConfidence = classificationConfidence;
+    }
+
+    public String getClassificationReason() {
+        return classificationReason;
+    }
+
+    public void setClassificationReason(String classificationReason) {
+        this.classificationReason = classificationReason;
+    }
+
+    public Instant getClassifiedAt() {
+        return classifiedAt;
+    }
+
+    public void setClassifiedAt(Instant classifiedAt) {
+        this.classifiedAt = classifiedAt;
     }
 
     public Instant getUploadedAt() {

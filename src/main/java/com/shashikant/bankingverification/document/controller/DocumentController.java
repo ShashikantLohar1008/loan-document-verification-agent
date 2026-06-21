@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.shashikant.bankingverification.document.dto.DocumentCreateRequestDTO;
+import com.shashikant.bankingverification.document.dto.DocumentClassificationResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentOcrResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentResponseDTO;
 import com.shashikant.bankingverification.document.enums.DocumentType;
@@ -74,5 +75,15 @@ public class DocumentController {
     @GetMapping("/{id}/ocr")
     public ResponseEntity<DocumentOcrResponseDTO> getOcr(@PathVariable Long id) {
         return ResponseEntity.ok(documentService.getOcr(id));
+    }
+
+    @PostMapping("/{id}/classify")
+    public ResponseEntity<DocumentClassificationResponseDTO> classifyDocument(@PathVariable Long id) {
+        return ResponseEntity.ok(documentService.classifyDocument(id));
+    }
+
+    @GetMapping("/{id}/classification")
+    public ResponseEntity<DocumentClassificationResponseDTO> getClassification(@PathVariable Long id) {
+        return ResponseEntity.ok(documentService.getClassification(id));
     }
 }

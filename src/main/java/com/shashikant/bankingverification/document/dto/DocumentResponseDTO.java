@@ -2,6 +2,7 @@ package com.shashikant.bankingverification.document.dto;
 
 import java.time.Instant;
 
+import com.shashikant.bankingverification.document.enums.ClassificationStatus;
 import com.shashikant.bankingverification.document.enums.DocumentStatus;
 import com.shashikant.bankingverification.document.enums.DocumentType;
 import com.shashikant.bankingverification.document.enums.OcrStatus;
@@ -17,6 +18,10 @@ public class DocumentResponseDTO {
     private Long fileSize;
     private OcrStatus ocrStatus;
     private Instant ocrProcessedAt;
+    private ClassificationStatus classificationStatus;
+    private DocumentType classifiedDocumentType;
+    private Double classificationConfidence;
+    private Instant classifiedAt;
     private Instant uploadedAt;
 
     public Long getId() {
@@ -89,6 +94,38 @@ public class DocumentResponseDTO {
 
     public void setOcrProcessedAt(Instant ocrProcessedAt) {
         this.ocrProcessedAt = ocrProcessedAt;
+    }
+
+    public ClassificationStatus getClassificationStatus() {
+        return classificationStatus;
+    }
+
+    public void setClassificationStatus(ClassificationStatus classificationStatus) {
+        this.classificationStatus = classificationStatus;
+    }
+
+    public DocumentType getClassifiedDocumentType() {
+        return classifiedDocumentType;
+    }
+
+    public void setClassifiedDocumentType(DocumentType classifiedDocumentType) {
+        this.classifiedDocumentType = classifiedDocumentType;
+    }
+
+    public Double getClassificationConfidence() {
+        return classificationConfidence;
+    }
+
+    public void setClassificationConfidence(Double classificationConfidence) {
+        this.classificationConfidence = classificationConfidence;
+    }
+
+    public Instant getClassifiedAt() {
+        return classifiedAt;
+    }
+
+    public void setClassifiedAt(Instant classifiedAt) {
+        this.classifiedAt = classifiedAt;
     }
 
     public Instant getUploadedAt() {

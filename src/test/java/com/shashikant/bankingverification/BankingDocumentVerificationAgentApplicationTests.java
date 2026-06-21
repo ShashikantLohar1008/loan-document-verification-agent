@@ -1,13 +1,14 @@
 package com.shashikant.bankingverification;
 
-import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
+import org.testng.annotations.Test;
 
 @SpringBootTest
-class BankingDocumentVerificationAgentApplicationTests {
+class BankingDocumentVerificationAgentApplicationTests extends AbstractTestNGSpringContextTests {
 
 	@Test
-	void contextLoads() {
+	public void contextLoads() {
 	}
 
 }

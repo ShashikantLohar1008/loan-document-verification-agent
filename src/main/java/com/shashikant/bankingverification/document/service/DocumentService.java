@@ -8,6 +8,7 @@ import com.shashikant.bankingverification.document.dto.DocumentCreateRequestDTO;
 import com.shashikant.bankingverification.document.dto.DocumentClassificationResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentOcrResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentResponseDTO;
+import com.shashikant.bankingverification.document.dto.DocumentVerificationReportDTO;
 import com.shashikant.bankingverification.document.dto.DocumentVerificationResponseDTO;
 import com.shashikant.bankingverification.document.enums.DocumentType;
 
@@ -32,4 +33,6 @@ public interface DocumentService {
     DocumentVerificationResponseDTO verifyDocument(Long documentKey);
 
     DocumentVerificationResponseDTO getVerification(Long documentKey);
+
+    DocumentVerificationReportDTO getVerificationReport(Long documentKey);
 }

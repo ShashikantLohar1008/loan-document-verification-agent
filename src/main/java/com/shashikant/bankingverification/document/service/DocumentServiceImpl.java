@@ -16,6 +16,7 @@ import com.shashikant.bankingverification.document.dto.DocumentCreateRequestDTO;
 import com.shashikant.bankingverification.document.dto.DocumentClassificationResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentOcrResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentResponseDTO;
+import com.shashikant.bankingverification.document.dto.DocumentVerificationReportDTO;
 import com.shashikant.bankingverification.document.dto.DocumentVerificationResponseDTO;
 import com.shashikant.bankingverification.document.entity.DocumentEntity;
 import com.shashikant.bankingverification.document.enums.ClassificationStatus;
@@ -198,6 +199,12 @@ public class DocumentServiceImpl implements DocumentService {
         return toVerificationResponse(findDocumentEntity(documentKey));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public DocumentVerificationReportDTO getVerificationReport(Long documentKey) {
+        return toVerificationReport(findDocumentEntity(documentKey));
+    }
+
     private DocumentEntity findDocumentEntity(Long documentKey) {
         return documentRepository.findById(documentKey)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found with id: " + documentKey));
@@ -274,6 +281,37 @@ public class DocumentServiceImpl implements DocumentService {
         response.setDetails(documentEntity.getVerificationDetails());
         response.setVerifiedAt(documentEntity.getVerifiedAt());
         return response;
+    }
+
+    private DocumentVerificationReportDTO toVerificationReport(DocumentEntity documentEntity) {
+        DocumentVerificationReportDTO report = new DocumentVerificationReportDTO();
+        report.setDocumentId(documentEntity.getDocumentKey());
+        report.setFileName(documentEntity.getFileName());
+        report.setOriginalFileName(documentEntity.getOriginalFileName());
+        report.setRequestedDocumentType(DocumentType.valueOf(documentEntity.getDocumentType()));
+        report.setDocumentStatus(DocumentStatus.valueOf(documentEntity.getDocumentStatus()));
+        if (documentEntity.getOcrStatus() != null) {
+            report.setOcrStatus(OcrStatus.valueOf(documentEntity.getOcrStatus()));
+        }
+        report.setOcrProcessedAt(documentEntity.getOcrProcessedAt());
+        if (documentEntity.getClassificationStatus() != null) {
+            report.setClassificationStatus(ClassificationStatus.valueOf(documentEntity.getClassificationStatus()));
+        }
+        if (documentEntity.getClassifiedDocumentType() != null) {
+            report.setClassifiedDocumentType(DocumentType.valueOf(documentEntity.getClassifiedDocumentType()));
+        }
+        report.setClassificationConfidence(documentEntity.getClassificationConfidence());
+        report.setClassifiedAt(documentEntity.getClassifiedAt());
+        if (documentEntity.getVerificationStatus() != null) {
+            report.setVerificationStatus(VerificationStatus.valueOf(documentEntity.getVerificationStatus()));
+        }
+        report.setVerificationScore(documentEntity.getVerificationScore());
+        report.setVerificationSummary(documentEntity.getVerificationSummary());
+        report.setVerificationDetails(documentEntity.getVerificationDetails());
+        report.setVerifiedAt(documentEntity.getVerifiedAt());
+        report.setUploadedAt(documentEntity.getUploadedAt());
+        report.setGeneratedAt(Instant.now());
+        return report;
     }
 
     private String toVerificationDetails(DocumentVerificationResult verificationResult) {

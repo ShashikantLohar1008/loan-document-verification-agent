@@ -66,6 +66,21 @@ public class DocumentEntity {
     @Column(name = "classified_at")
     private Instant classifiedAt;
 
+    @Column(name = "verification_status")
+    private String verificationStatus;
+
+    @Column(name = "verification_score")
+    private Double verificationScore;
+
+    @Column(name = "verification_summary")
+    private String verificationSummary;
+
+    @Column(name = "verification_details")
+    private String verificationDetails;
+
+    @Column(name = "verified_at")
+    private Instant verifiedAt;
+
     @Column(name = "uploaded_at", nullable = false)
     private Instant uploadedAt;
 
@@ -203,6 +218,46 @@ public class DocumentEntity {
 
     public void setClassifiedAt(Instant classifiedAt) {
         this.classifiedAt = classifiedAt;
+    }
+
+    public String getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public void setVerificationStatus(String verificationStatus) {
+        this.verificationStatus = verificationStatus;
+    }
+
+    public Double getVerificationScore() {
+        return verificationScore;
+    }
+
+    public void setVerificationScore(Double verificationScore) {
+        this.verificationScore = verificationScore;
+    }
+
+    public String getVerificationSummary() {
+        return verificationSummary;
+    }
+
+    public void setVerificationSummary(String verificationSummary) {
+        this.verificationSummary = verificationSummary;
+    }
+
+    public String getVerificationDetails() {
+        return verificationDetails;
+    }
+
+    public void setVerificationDetails(String verificationDetails) {
+        this.verificationDetails = verificationDetails;
+    }
+
+    public Instant getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(Instant verifiedAt) {
+        this.verifiedAt = verifiedAt;
     }
 
     public Instant getUploadedAt() {

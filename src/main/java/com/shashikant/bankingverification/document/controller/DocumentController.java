@@ -19,6 +19,7 @@ import com.shashikant.bankingverification.document.dto.DocumentCreateRequestDTO;
 import com.shashikant.bankingverification.document.dto.DocumentClassificationResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentOcrResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentResponseDTO;
+import com.shashikant.bankingverification.document.dto.DocumentVerificationResponseDTO;
 import com.shashikant.bankingverification.document.enums.DocumentType;
 import com.shashikant.bankingverification.document.service.DocumentService;
 
@@ -85,5 +86,15 @@ public class DocumentController {
     @GetMapping("/{id}/classification")
     public ResponseEntity<DocumentClassificationResponseDTO> getClassification(@PathVariable Long id) {
         return ResponseEntity.ok(documentService.getClassification(id));
+    }
+
+    @PostMapping("/{id}/verify")
+    public ResponseEntity<DocumentVerificationResponseDTO> verifyDocument(@PathVariable Long id) {
+        return ResponseEntity.ok(documentService.verifyDocument(id));
+    }
+
+    @GetMapping("/{id}/verification")
+    public ResponseEntity<DocumentVerificationResponseDTO> getVerification(@PathVariable Long id) {
+        return ResponseEntity.ok(documentService.getVerification(id));
     }
 }

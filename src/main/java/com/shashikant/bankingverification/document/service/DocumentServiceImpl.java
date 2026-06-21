@@ -16,13 +16,18 @@ import com.shashikant.bankingverification.document.dto.DocumentCreateRequestDTO;
 import com.shashikant.bankingverification.document.dto.DocumentClassificationResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentOcrResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentResponseDTO;
+import com.shashikant.bankingverification.document.dto.DocumentVerificationResponseDTO;
 import com.shashikant.bankingverification.document.entity.DocumentEntity;
 import com.shashikant.bankingverification.document.enums.ClassificationStatus;
 import com.shashikant.bankingverification.document.enums.DocumentStatus;
 import com.shashikant.bankingverification.document.enums.DocumentType;
 import com.shashikant.bankingverification.document.enums.OcrStatus;
+import com.shashikant.bankingverification.document.enums.VerificationStatus;
 import com.shashikant.bankingverification.document.repository.DocumentRepository;
 import com.shashikant.bankingverification.document.storage.StoredDocumentFile;
+import com.shashikant.bankingverification.document.verification.DocumentVerificationResult;
+import com.shashikant.bankingverification.document.verification.DocumentVerificationService;
+import com.shashikant.bankingverification.document.verification.VerificationCheckResult;
 
 @Service
 public class DocumentServiceImpl implements DocumentService {
@@ -31,13 +36,16 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentStorageService documentStorageService;
     private final OcrExtractionService ocrExtractionService;
     private final DocumentClassificationService documentClassificationService;
+    private final DocumentVerificationService documentVerificationService;
 
     public DocumentServiceImpl(DocumentRepository documentRepository, DocumentStorageService documentStorageService,
-            OcrExtractionService ocrExtractionService, DocumentClassificationService documentClassificationService) {
+            OcrExtractionService ocrExtractionService, DocumentClassificationService documentClassificationService,
+            DocumentVerificationService documentVerificationService) {
         this.documentRepository = documentRepository;
         this.documentStorageService = documentStorageService;
         this.ocrExtractionService = ocrExtractionService;
         this.documentClassificationService = documentClassificationService;
+        this.documentVerificationService = documentVerificationService;
     }
 
     @Override
@@ -50,6 +58,7 @@ public class DocumentServiceImpl implements DocumentService {
         documentEntity.setDocumentStatus(DocumentStatus.UPLOADED.name());
         documentEntity.setOcrStatus(OcrStatus.PENDING.name());
         documentEntity.setClassificationStatus(ClassificationStatus.PENDING.name());
+        documentEntity.setVerificationStatus(VerificationStatus.PENDING.name());
         documentEntity.setUploadedAt(Instant.now());
 
         DocumentEntity savedDocument = documentRepository.save(documentEntity);
@@ -71,6 +80,7 @@ public class DocumentServiceImpl implements DocumentService {
         documentEntity.setStoragePath(storedDocumentFile.storagePath());
         documentEntity.setOcrStatus(OcrStatus.PENDING.name());
         documentEntity.setClassificationStatus(ClassificationStatus.PENDING.name());
+        documentEntity.setVerificationStatus(VerificationStatus.PENDING.name());
         documentEntity.setUploadedAt(Instant.now());
 
         DocumentEntity savedDocument = documentRepository.save(documentEntity);
@@ -152,6 +162,42 @@ public class DocumentServiceImpl implements DocumentService {
         return toClassificationResponse(findDocumentEntity(documentKey));
     }
 
+    @Override
+    @Transactional
+    public DocumentVerificationResponseDTO verifyDocument(Long documentKey) {
+        DocumentEntity documentEntity = findDocumentEntity(documentKey);
+        if (documentEntity.getOcrText() == null || documentEntity.getOcrText().isBlank()) {
+            throw new BadRequestException("Verification requires completed OCR text");
+        }
+        if (documentEntity.getClassifiedDocumentType() == null || documentEntity.getClassifiedDocumentType().isBlank()) {
+            throw new BadRequestException("Verification requires document classification");
+        }
+
+        DocumentType documentType = DocumentType.valueOf(documentEntity.getClassifiedDocumentType());
+        documentEntity.setDocumentStatus(DocumentStatus.PROCESSING.name());
+
+        DocumentVerificationResult verificationResult = documentVerificationService.verify(
+                documentType,
+                documentEntity.getOcrText());
+
+        documentEntity.setVerificationStatus(verificationResult.getVerificationStatus().name());
+        documentEntity.setVerificationScore(verificationResult.getScore());
+        documentEntity.setVerificationSummary(truncate(verificationResult.getSummary(), 1000));
+        documentEntity.setVerificationDetails(toVerificationDetails(verificationResult));
+        documentEntity.setVerifiedAt(Instant.now());
+        documentEntity.setDocumentStatus(verificationResult.getVerificationStatus() == VerificationStatus.PASSED
+                ? DocumentStatus.VERIFIED.name()
+                : DocumentStatus.FAILED.name());
+
+        return toVerificationResponse(documentEntity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DocumentVerificationResponseDTO getVerification(Long documentKey) {
+        return toVerificationResponse(findDocumentEntity(documentKey));
+    }
+
     private DocumentEntity findDocumentEntity(Long documentKey) {
         return documentRepository.findById(documentKey)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found with id: " + documentKey));
@@ -178,6 +224,11 @@ public class DocumentServiceImpl implements DocumentService {
         }
         response.setClassificationConfidence(documentEntity.getClassificationConfidence());
         response.setClassifiedAt(documentEntity.getClassifiedAt());
+        if (documentEntity.getVerificationStatus() != null) {
+            response.setVerificationStatus(VerificationStatus.valueOf(documentEntity.getVerificationStatus()));
+        }
+        response.setVerificationScore(documentEntity.getVerificationScore());
+        response.setVerifiedAt(documentEntity.getVerifiedAt());
         response.setUploadedAt(documentEntity.getUploadedAt());
         return response;
     }
@@ -207,6 +258,35 @@ public class DocumentServiceImpl implements DocumentService {
         response.setReason(documentEntity.getClassificationReason());
         response.setClassifiedAt(documentEntity.getClassifiedAt());
         return response;
+    }
+
+    private DocumentVerificationResponseDTO toVerificationResponse(DocumentEntity documentEntity) {
+        DocumentVerificationResponseDTO response = new DocumentVerificationResponseDTO();
+        response.setDocumentId(documentEntity.getDocumentKey());
+        if (documentEntity.getClassifiedDocumentType() != null) {
+            response.setDocumentType(DocumentType.valueOf(documentEntity.getClassifiedDocumentType()));
+        }
+        if (documentEntity.getVerificationStatus() != null) {
+            response.setVerificationStatus(VerificationStatus.valueOf(documentEntity.getVerificationStatus()));
+        }
+        response.setScore(documentEntity.getVerificationScore());
+        response.setSummary(documentEntity.getVerificationSummary());
+        response.setDetails(documentEntity.getVerificationDetails());
+        response.setVerifiedAt(documentEntity.getVerifiedAt());
+        return response;
+    }
+
+    private String toVerificationDetails(DocumentVerificationResult verificationResult) {
+        StringBuilder details = new StringBuilder();
+        for (VerificationCheckResult checkResult : verificationResult.getChecks()) {
+            details.append(checkResult.getRuleCode())
+                    .append(": ")
+                    .append(checkResult.isPassed() ? "PASSED" : "FAILED")
+                    .append(" - ")
+                    .append(checkResult.getMessage())
+                    .append(System.lineSeparator());
+        }
+        return details.toString().strip();
     }
 
     private String truncate(String value, int maxLength) {

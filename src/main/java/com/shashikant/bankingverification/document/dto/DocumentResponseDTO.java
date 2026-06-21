@@ -6,6 +6,7 @@ import com.shashikant.bankingverification.document.enums.ClassificationStatus;
 import com.shashikant.bankingverification.document.enums.DocumentStatus;
 import com.shashikant.bankingverification.document.enums.DocumentType;
 import com.shashikant.bankingverification.document.enums.OcrStatus;
+import com.shashikant.bankingverification.document.enums.VerificationStatus;
 
 public class DocumentResponseDTO {
 
@@ -22,6 +23,9 @@ public class DocumentResponseDTO {
     private DocumentType classifiedDocumentType;
     private Double classificationConfidence;
     private Instant classifiedAt;
+    private VerificationStatus verificationStatus;
+    private Double verificationScore;
+    private Instant verifiedAt;
     private Instant uploadedAt;
 
     public Long getId() {
@@ -126,6 +130,30 @@ public class DocumentResponseDTO {
 
     public void setClassifiedAt(Instant classifiedAt) {
         this.classifiedAt = classifiedAt;
+    }
+
+    public VerificationStatus getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public void setVerificationStatus(VerificationStatus verificationStatus) {
+        this.verificationStatus = verificationStatus;
+    }
+
+    public Double getVerificationScore() {
+        return verificationScore;
+    }
+
+    public void setVerificationScore(Double verificationScore) {
+        this.verificationScore = verificationScore;
+    }
+
+    public Instant getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(Instant verifiedAt) {
+        this.verifiedAt = verifiedAt;
     }
 
     public Instant getUploadedAt() {

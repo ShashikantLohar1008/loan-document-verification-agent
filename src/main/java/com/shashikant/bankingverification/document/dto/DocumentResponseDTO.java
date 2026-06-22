@@ -2,6 +2,7 @@ package com.shashikant.bankingverification.document.dto;
 
 import java.time.Instant;
 
+import com.shashikant.bankingverification.document.enums.AiSummaryStatus;
 import com.shashikant.bankingverification.document.enums.ClassificationStatus;
 import com.shashikant.bankingverification.document.enums.DocumentStatus;
 import com.shashikant.bankingverification.document.enums.DocumentType;
@@ -26,6 +27,8 @@ public class DocumentResponseDTO {
     private VerificationStatus verificationStatus;
     private Double verificationScore;
     private Instant verifiedAt;
+    private AiSummaryStatus aiSummaryStatus;
+    private Instant aiSummaryGeneratedAt;
     private Instant uploadedAt;
 
     public Long getId() {
@@ -154,6 +157,22 @@ public class DocumentResponseDTO {
 
     public void setVerifiedAt(Instant verifiedAt) {
         this.verifiedAt = verifiedAt;
+    }
+
+    public AiSummaryStatus getAiSummaryStatus() {
+        return aiSummaryStatus;
+    }
+
+    public void setAiSummaryStatus(AiSummaryStatus aiSummaryStatus) {
+        this.aiSummaryStatus = aiSummaryStatus;
+    }
+
+    public Instant getAiSummaryGeneratedAt() {
+        return aiSummaryGeneratedAt;
+    }
+
+    public void setAiSummaryGeneratedAt(Instant aiSummaryGeneratedAt) {
+        this.aiSummaryGeneratedAt = aiSummaryGeneratedAt;
     }
 
     public Instant getUploadedAt() {

@@ -10,15 +10,18 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.shashikant.bankingverification.common.exception.BadRequestException;
 import com.shashikant.bankingverification.common.exception.ResourceNotFoundException;
+import com.shashikant.bankingverification.document.ai.AiVerificationSummaryService;
 import com.shashikant.bankingverification.document.classification.DocumentClassificationResult;
 import com.shashikant.bankingverification.document.classification.DocumentClassificationService;
 import com.shashikant.bankingverification.document.dto.DocumentCreateRequestDTO;
+import com.shashikant.bankingverification.document.dto.DocumentAiSummaryResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentClassificationResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentOcrResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentVerificationReportDTO;
 import com.shashikant.bankingverification.document.dto.DocumentVerificationResponseDTO;
 import com.shashikant.bankingverification.document.entity.DocumentEntity;
+import com.shashikant.bankingverification.document.enums.AiSummaryStatus;
 import com.shashikant.bankingverification.document.enums.ClassificationStatus;
 import com.shashikant.bankingverification.document.enums.DocumentStatus;
 import com.shashikant.bankingverification.document.enums.DocumentType;
@@ -38,15 +41,18 @@ public class DocumentServiceImpl implements DocumentService {
     private final OcrExtractionService ocrExtractionService;
     private final DocumentClassificationService documentClassificationService;
     private final DocumentVerificationService documentVerificationService;
+    private final AiVerificationSummaryService aiVerificationSummaryService;
 
     public DocumentServiceImpl(DocumentRepository documentRepository, DocumentStorageService documentStorageService,
             OcrExtractionService ocrExtractionService, DocumentClassificationService documentClassificationService,
-            DocumentVerificationService documentVerificationService) {
+            DocumentVerificationService documentVerificationService,
+            AiVerificationSummaryService aiVerificationSummaryService) {
         this.documentRepository = documentRepository;
         this.documentStorageService = documentStorageService;
         this.ocrExtractionService = ocrExtractionService;
         this.documentClassificationService = documentClassificationService;
         this.documentVerificationService = documentVerificationService;
+        this.aiVerificationSummaryService = aiVerificationSummaryService;
     }
 
     @Override
@@ -60,6 +66,7 @@ public class DocumentServiceImpl implements DocumentService {
         documentEntity.setOcrStatus(OcrStatus.PENDING.name());
         documentEntity.setClassificationStatus(ClassificationStatus.PENDING.name());
         documentEntity.setVerificationStatus(VerificationStatus.PENDING.name());
+        documentEntity.setAiSummaryStatus(AiSummaryStatus.PENDING.name());
         documentEntity.setUploadedAt(Instant.now());
 
         DocumentEntity savedDocument = documentRepository.save(documentEntity);
@@ -82,6 +89,7 @@ public class DocumentServiceImpl implements DocumentService {
         documentEntity.setOcrStatus(OcrStatus.PENDING.name());
         documentEntity.setClassificationStatus(ClassificationStatus.PENDING.name());
         documentEntity.setVerificationStatus(VerificationStatus.PENDING.name());
+        documentEntity.setAiSummaryStatus(AiSummaryStatus.PENDING.name());
         documentEntity.setUploadedAt(Instant.now());
 
         DocumentEntity savedDocument = documentRepository.save(documentEntity);
@@ -205,6 +213,46 @@ public class DocumentServiceImpl implements DocumentService {
         return toVerificationReport(findDocumentEntity(documentKey));
     }
 
+    @Override
+    @Transactional(noRollbackFor = BadRequestException.class)
+    public DocumentAiSummaryResponseDTO generateAiSummary(Long documentKey) {
+        DocumentEntity documentEntity = findDocumentEntity(documentKey);
+        if (documentEntity.getVerificationStatus() == null || documentEntity.getVerificationStatus().isBlank()) {
+            throw new BadRequestException("AI summary requires completed verification");
+        }
+        if (VerificationStatus.PENDING.name().equals(documentEntity.getVerificationStatus())) {
+            throw new BadRequestException("AI summary requires completed verification");
+        }
+
+        documentEntity.setAiSummaryStatus(AiSummaryStatus.GENERATING.name());
+        documentEntity.setAiSummaryErrorMessage(null);
+
+        try {
+            String summary = aiVerificationSummaryService.generateSummary(toVerificationReport(documentEntity));
+            documentEntity.setAiSummary(summary);
+            documentEntity.setAiSummaryStatus(AiSummaryStatus.COMPLETED.name());
+            documentEntity.setAiSummaryGeneratedAt(Instant.now());
+        } catch (BadRequestException exception) {
+            documentEntity.setAiSummaryStatus(AiSummaryStatus.FAILED.name());
+            documentEntity.setAiSummaryErrorMessage(truncate(exception.getMessage(), 1000));
+            documentEntity.setAiSummaryGeneratedAt(Instant.now());
+            throw exception;
+        } catch (RuntimeException exception) {
+            documentEntity.setAiSummaryStatus(AiSummaryStatus.FAILED.name());
+            documentEntity.setAiSummaryErrorMessage(truncate("AI summary generation failed: " + exception.getMessage(), 1000));
+            documentEntity.setAiSummaryGeneratedAt(Instant.now());
+            throw new BadRequestException("AI summary generation failed");
+        }
+
+        return toAiSummaryResponse(documentEntity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DocumentAiSummaryResponseDTO getAiSummary(Long documentKey) {
+        return toAiSummaryResponse(findDocumentEntity(documentKey));
+    }
+
     private DocumentEntity findDocumentEntity(Long documentKey) {
         return documentRepository.findById(documentKey)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found with id: " + documentKey));
@@ -236,6 +284,10 @@ public class DocumentServiceImpl implements DocumentService {
         }
         response.setVerificationScore(documentEntity.getVerificationScore());
         response.setVerifiedAt(documentEntity.getVerifiedAt());
+        if (documentEntity.getAiSummaryStatus() != null) {
+            response.setAiSummaryStatus(AiSummaryStatus.valueOf(documentEntity.getAiSummaryStatus()));
+        }
+        response.setAiSummaryGeneratedAt(documentEntity.getAiSummaryGeneratedAt());
         response.setUploadedAt(documentEntity.getUploadedAt());
         return response;
     }
@@ -309,9 +361,26 @@ public class DocumentServiceImpl implements DocumentService {
         report.setVerificationSummary(documentEntity.getVerificationSummary());
         report.setVerificationDetails(documentEntity.getVerificationDetails());
         report.setVerifiedAt(documentEntity.getVerifiedAt());
+        if (documentEntity.getAiSummaryStatus() != null) {
+            report.setAiSummaryStatus(AiSummaryStatus.valueOf(documentEntity.getAiSummaryStatus()));
+        }
+        report.setAiSummary(documentEntity.getAiSummary());
+        report.setAiSummaryGeneratedAt(documentEntity.getAiSummaryGeneratedAt());
         report.setUploadedAt(documentEntity.getUploadedAt());
         report.setGeneratedAt(Instant.now());
         return report;
+    }
+
+    private DocumentAiSummaryResponseDTO toAiSummaryResponse(DocumentEntity documentEntity) {
+        DocumentAiSummaryResponseDTO response = new DocumentAiSummaryResponseDTO();
+        response.setDocumentId(documentEntity.getDocumentKey());
+        if (documentEntity.getAiSummaryStatus() != null) {
+            response.setAiSummaryStatus(AiSummaryStatus.valueOf(documentEntity.getAiSummaryStatus()));
+        }
+        response.setSummary(documentEntity.getAiSummary());
+        response.setGeneratedAt(documentEntity.getAiSummaryGeneratedAt());
+        response.setErrorMessage(documentEntity.getAiSummaryErrorMessage());
+        return response;
     }
 
     private String toVerificationDetails(DocumentVerificationResult verificationResult) {

@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.shashikant.bankingverification.document.dto.DocumentCreateRequestDTO;
+import com.shashikant.bankingverification.document.dto.DocumentAiSummaryResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentClassificationResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentOcrResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentResponseDTO;
@@ -102,5 +103,15 @@ public class DocumentController {
     @GetMapping("/{id}/report")
     public ResponseEntity<DocumentVerificationReportDTO> getVerificationReport(@PathVariable Long id) {
         return ResponseEntity.ok(documentService.getVerificationReport(id));
+    }
+
+    @PostMapping("/{id}/ai-summary")
+    public ResponseEntity<DocumentAiSummaryResponseDTO> generateAiSummary(@PathVariable Long id) {
+        return ResponseEntity.ok(documentService.generateAiSummary(id));
+    }
+
+    @GetMapping("/{id}/ai-summary")
+    public ResponseEntity<DocumentAiSummaryResponseDTO> getAiSummary(@PathVariable Long id) {
+        return ResponseEntity.ok(documentService.getAiSummary(id));
     }
 }

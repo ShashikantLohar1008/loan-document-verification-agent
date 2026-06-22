@@ -81,6 +81,18 @@ public class DocumentEntity {
     @Column(name = "verified_at")
     private Instant verifiedAt;
 
+    @Column(name = "ai_summary_status")
+    private String aiSummaryStatus;
+
+    @Column(name = "ai_summary")
+    private String aiSummary;
+
+    @Column(name = "ai_summary_generated_at")
+    private Instant aiSummaryGeneratedAt;
+
+    @Column(name = "ai_summary_error_message")
+    private String aiSummaryErrorMessage;
+
     @Column(name = "uploaded_at", nullable = false)
     private Instant uploadedAt;
 
@@ -258,6 +270,38 @@ public class DocumentEntity {
 
     public void setVerifiedAt(Instant verifiedAt) {
         this.verifiedAt = verifiedAt;
+    }
+
+    public String getAiSummaryStatus() {
+        return aiSummaryStatus;
+    }
+
+    public void setAiSummaryStatus(String aiSummaryStatus) {
+        this.aiSummaryStatus = aiSummaryStatus;
+    }
+
+    public String getAiSummary() {
+        return aiSummary;
+    }
+
+    public void setAiSummary(String aiSummary) {
+        this.aiSummary = aiSummary;
+    }
+
+    public Instant getAiSummaryGeneratedAt() {
+        return aiSummaryGeneratedAt;
+    }
+
+    public void setAiSummaryGeneratedAt(Instant aiSummaryGeneratedAt) {
+        this.aiSummaryGeneratedAt = aiSummaryGeneratedAt;
+    }
+
+    public String getAiSummaryErrorMessage() {
+        return aiSummaryErrorMessage;
+    }
+
+    public void setAiSummaryErrorMessage(String aiSummaryErrorMessage) {
+        this.aiSummaryErrorMessage = aiSummaryErrorMessage;
     }
 
     public Instant getUploadedAt() {

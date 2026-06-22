@@ -9,4 +9,5 @@
     <include file="ddl/003-document-ocr.xml" relativeToChangelogFile="true"/>
     <include file="ddl/004-document-classification.xml" relativeToChangelogFile="true"/>
     <include file="ddl/005-document-verification.xml" relativeToChangelogFile="true"/>
+    <include file="ddl/006-document-ai-summary.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

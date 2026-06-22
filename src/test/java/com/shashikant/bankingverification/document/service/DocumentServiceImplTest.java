@@ -17,14 +17,17 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.shashikant.bankingverification.document.ai.AiVerificationSummaryService;
 import com.shashikant.bankingverification.document.classification.DocumentClassificationResult;
 import com.shashikant.bankingverification.document.classification.DocumentClassificationService;
+import com.shashikant.bankingverification.document.dto.DocumentAiSummaryResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentClassificationResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentOcrResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentVerificationReportDTO;
 import com.shashikant.bankingverification.document.dto.DocumentVerificationResponseDTO;
 import com.shashikant.bankingverification.document.entity.DocumentEntity;
+import com.shashikant.bankingverification.document.enums.AiSummaryStatus;
 import com.shashikant.bankingverification.document.enums.ClassificationStatus;
 import com.shashikant.bankingverification.document.enums.DocumentStatus;
 import com.shashikant.bankingverification.document.enums.DocumentType;
@@ -54,6 +57,9 @@ class DocumentServiceImplTest {
     private DocumentVerificationService documentVerificationService;
 
     @Mock
+    private AiVerificationSummaryService aiVerificationSummaryService;
+
+    @Mock
     private MultipartFile multipartFile;
 
     private DocumentServiceImpl documentService;
@@ -68,7 +74,8 @@ class DocumentServiceImplTest {
                 documentStorageService,
                 ocrExtractionService,
                 documentClassificationService,
-                documentVerificationService);
+                documentVerificationService,
+                aiVerificationSummaryService);
     }
 
     @AfterMethod
@@ -102,6 +109,7 @@ class DocumentServiceImplTest {
         assertEquals(response.getOcrStatus(), OcrStatus.PENDING);
         assertEquals(response.getClassificationStatus(), ClassificationStatus.PENDING);
         assertEquals(response.getVerificationStatus(), VerificationStatus.PENDING);
+        assertEquals(response.getAiSummaryStatus(), AiSummaryStatus.PENDING);
         assertNotNull(response.getUploadedAt());
         verify(documentStorageService).store(multipartFile);
         verify(documentRepository).save(any(DocumentEntity.class));
@@ -203,6 +211,35 @@ class DocumentServiceImplTest {
         assertNotNull(report.getGeneratedAt());
     }
 
+    @Test
+    public void generateAiSummaryCallsAiServiceAndStoresSummary() {
+        DocumentEntity documentEntity = uploadedDocumentEntity();
+        documentEntity.setOcrStatus(OcrStatus.COMPLETED.name());
+        documentEntity.setClassificationStatus(ClassificationStatus.COMPLETED.name());
+        documentEntity.setClassifiedDocumentType(DocumentType.PAN.name());
+        documentEntity.setClassificationConfidence(0.95);
+        documentEntity.setVerificationStatus(VerificationStatus.PASSED.name());
+        documentEntity.setVerificationScore(1.0);
+        documentEntity.setVerificationSummary("3 of 3 verification rules passed");
+        documentEntity.setVerificationDetails("PAN_NUMBER: PASSED - PAN number format should be present");
+        documentEntity.setDocumentStatus(DocumentStatus.VERIFIED.name());
+        when(documentRepository.findById(1L)).thenReturn(Optional.of(documentEntity));
+        when(aiVerificationSummaryService.generateSummary(any(DocumentVerificationReportDTO.class)))
+                .thenReturn("The PAN document passed all verification rules and no manual review is required.");
+
+        DocumentAiSummaryResponseDTO response = documentService.generateAiSummary(1L);
+
+        assertEquals(response.getDocumentId(), Long.valueOf(1L));
+        assertEquals(response.getAiSummaryStatus(), AiSummaryStatus.COMPLETED);
+        assertEquals(response.getSummary(),
+                "The PAN document passed all verification rules and no manual review is required.");
+        assertNotNull(response.getGeneratedAt());
+        assertEquals(documentEntity.getAiSummaryStatus(), AiSummaryStatus.COMPLETED.name());
+        assertEquals(documentEntity.getAiSummary(),
+                "The PAN document passed all verification rules and no manual review is required.");
+        verify(aiVerificationSummaryService).generateSummary(any(DocumentVerificationReportDTO.class));
+    }
+
     private DocumentEntity uploadedDocumentEntity() {
         DocumentEntity documentEntity = new DocumentEntity();
         documentEntity.setDocumentKey(1L);
@@ -216,6 +253,7 @@ class DocumentServiceImplTest {
         documentEntity.setOcrStatus(OcrStatus.PENDING.name());
         documentEntity.setClassificationStatus(ClassificationStatus.PENDING.name());
         documentEntity.setVerificationStatus(VerificationStatus.PENDING.name());
+        documentEntity.setAiSummaryStatus(AiSummaryStatus.PENDING.name());
         documentEntity.setUploadedAt(java.time.Instant.now());
         return documentEntity;
     }

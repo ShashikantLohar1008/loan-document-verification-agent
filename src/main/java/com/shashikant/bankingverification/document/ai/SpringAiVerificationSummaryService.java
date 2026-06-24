@@ -1,21 +1,15 @@
 package com.shashikant.bankingverification.document.ai;
 
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.stereotype.Service;
 
 import com.shashikant.bankingverification.document.dto.DocumentVerificationReportDTO;
 
-@Service
-@ConditionalOnBean(ChatClient.Builder.class)
-@ConditionalOnExpression("'${spring.ai.openai.api-key:}'.length() > 0")
 public class SpringAiVerificationSummaryService implements AiVerificationSummaryService {
 
     private final ChatClient chatClient;
 
-    public SpringAiVerificationSummaryService(ChatClient.Builder chatClientBuilder) {
-        this.chatClient = chatClientBuilder.build();
+    public SpringAiVerificationSummaryService(ChatClient chatClient) {
+        this.chatClient = chatClient;
     }
 
     @Override

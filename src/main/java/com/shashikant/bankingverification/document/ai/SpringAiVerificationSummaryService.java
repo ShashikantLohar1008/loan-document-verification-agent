@@ -1,7 +1,9 @@
 package com.shashikant.bankingverification.document.ai;
 
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.support.ToolCallbacks;
 
+import com.shashikant.bankingverification.document.ai.tool.DocumentVerificationReportTool;
 import com.shashikant.bankingverification.document.dto.DocumentVerificationReportDTO;
 
 public class SpringAiVerificationSummaryService implements AiVerificationSummaryService {
@@ -23,6 +25,23 @@ public class SpringAiVerificationSummaryService implements AiVerificationSummary
                         Keep the answer under 120 words.
                         """)
                 .user(buildPrompt(report))
+                .call()
+                .content();
+    }
+
+    @Override
+    public String generateSummaryWithTool(Long documentId, DocumentVerificationReportTool documentVerificationReportTool) {
+        return chatClient.prompt()
+                .system("""
+                        You are a banking document verification assistant.
+                        Use the getVerificationReport tool to fetch the document verification report.
+                        Explain the tool result in clear, concise language for a loan officer.
+                        Do not make approval decisions. Do not override the rule engine.
+                        Mention whether manual review is recommended based only on the tool result.
+                        Keep the answer under 120 words.
+                        """)
+                .user("Generate a verification summary for document id: " + documentId)
+                .toolCallbacks(ToolCallbacks.from(documentVerificationReportTool))
                 .call()
                 .content();
     }

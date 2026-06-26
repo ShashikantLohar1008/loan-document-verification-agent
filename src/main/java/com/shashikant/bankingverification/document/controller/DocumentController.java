@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.shashikant.bankingverification.document.dto.DocumentAuditHistoryResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentCreateRequestDTO;
 import com.shashikant.bankingverification.document.dto.DocumentAiSummaryResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentClassificationResponseDTO;
@@ -110,8 +111,18 @@ public class DocumentController {
         return ResponseEntity.ok(documentService.generateAiSummary(id));
     }
 
+    @PostMapping("/{id}/ai-tool-summary")
+    public ResponseEntity<DocumentAiSummaryResponseDTO> generateAiToolSummary(@PathVariable Long id) {
+        return ResponseEntity.ok(documentService.generateAiToolSummary(id));
+    }
+
     @GetMapping("/{id}/ai-summary")
     public ResponseEntity<DocumentAiSummaryResponseDTO> getAiSummary(@PathVariable Long id) {
         return ResponseEntity.ok(documentService.getAiSummary(id));
+    }
+
+    @GetMapping("/{id}/audit-history")
+    public ResponseEntity<List<DocumentAuditHistoryResponseDTO>> getAuditHistory(@PathVariable Long id) {
+        return ResponseEntity.ok(documentService.getAuditHistory(id));
     }
 }

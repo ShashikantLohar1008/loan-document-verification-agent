@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.shashikant.bankingverification.document.dto.DocumentAuditHistoryResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentCreateRequestDTO;
 import com.shashikant.bankingverification.document.dto.DocumentAiSummaryResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentClassificationResponseDTO;
@@ -39,5 +40,9 @@ public interface DocumentService {
 
     DocumentAiSummaryResponseDTO generateAiSummary(Long documentKey);
 
+    DocumentAiSummaryResponseDTO generateAiToolSummary(Long documentKey);
+
     DocumentAiSummaryResponseDTO getAiSummary(Long documentKey);
+
+    List<DocumentAuditHistoryResponseDTO> getAuditHistory(Long documentKey);
 }

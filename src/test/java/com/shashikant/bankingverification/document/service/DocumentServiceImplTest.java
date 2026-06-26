@@ -18,8 +18,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.shashikant.bankingverification.document.ai.AiVerificationSummaryService;
+import com.shashikant.bankingverification.document.ai.tool.DocumentVerificationReportTool;
+import com.shashikant.bankingverification.document.entity.DocumentAuditHistoryEntity;
 import com.shashikant.bankingverification.document.classification.DocumentClassificationResult;
 import com.shashikant.bankingverification.document.classification.DocumentClassificationService;
+import com.shashikant.bankingverification.document.dto.DocumentAuditHistoryResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentAiSummaryResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentClassificationResponseDTO;
 import com.shashikant.bankingverification.document.dto.DocumentOcrResponseDTO;
@@ -33,6 +36,7 @@ import com.shashikant.bankingverification.document.enums.DocumentStatus;
 import com.shashikant.bankingverification.document.enums.DocumentType;
 import com.shashikant.bankingverification.document.enums.OcrStatus;
 import com.shashikant.bankingverification.document.enums.VerificationStatus;
+import com.shashikant.bankingverification.document.repository.DocumentAuditHistoryRepository;
 import com.shashikant.bankingverification.document.repository.DocumentRepository;
 import com.shashikant.bankingverification.document.storage.StoredDocumentFile;
 import com.shashikant.bankingverification.document.verification.DocumentVerificationResult;
@@ -60,6 +64,9 @@ class DocumentServiceImplTest {
     private AiVerificationSummaryService aiVerificationSummaryService;
 
     @Mock
+    private DocumentAuditHistoryRepository documentAuditHistoryRepository;
+
+    @Mock
     private MultipartFile multipartFile;
 
     private DocumentServiceImpl documentService;
@@ -75,7 +82,8 @@ class DocumentServiceImplTest {
                 ocrExtractionService,
                 documentClassificationService,
                 documentVerificationService,
-                aiVerificationSummaryService);
+                aiVerificationSummaryService,
+                documentAuditHistoryRepository);
     }
 
     @AfterMethod
@@ -179,6 +187,7 @@ class DocumentServiceImplTest {
         assertEquals(documentEntity.getDocumentStatus(), DocumentStatus.VERIFIED.name());
         assertEquals(documentEntity.getVerificationStatus(), VerificationStatus.PASSED.name());
         verify(documentVerificationService).verify(DocumentType.PAN, documentEntity.getOcrText());
+        verify(documentAuditHistoryRepository).save(any(DocumentAuditHistoryEntity.class));
     }
 
     @Test
@@ -238,6 +247,65 @@ class DocumentServiceImplTest {
         assertEquals(documentEntity.getAiSummary(),
                 "The PAN document passed all verification rules and no manual review is required.");
         verify(aiVerificationSummaryService).generateSummary(any(DocumentVerificationReportDTO.class));
+        verify(documentAuditHistoryRepository).save(any(DocumentAuditHistoryEntity.class));
+    }
+
+    @Test
+    public void generateAiToolSummaryCallsAiServiceWithToolAndStoresSummary() {
+        DocumentEntity documentEntity = uploadedDocumentEntity();
+        documentEntity.setOcrStatus(OcrStatus.COMPLETED.name());
+        documentEntity.setClassificationStatus(ClassificationStatus.COMPLETED.name());
+        documentEntity.setClassifiedDocumentType(DocumentType.PAN.name());
+        documentEntity.setClassificationConfidence(0.95);
+        documentEntity.setVerificationStatus(VerificationStatus.PASSED.name());
+        documentEntity.setVerificationScore(1.0);
+        documentEntity.setVerificationSummary("3 of 3 verification rules passed");
+        documentEntity.setVerificationDetails("PAN_NUMBER: PASSED - PAN number format should be present");
+        documentEntity.setDocumentStatus(DocumentStatus.VERIFIED.name());
+        when(documentRepository.findById(1L)).thenReturn(Optional.of(documentEntity));
+        when(aiVerificationSummaryService.generateSummaryWithTool(any(Long.class), any(DocumentVerificationReportTool.class)))
+                .thenReturn("The PAN verification report was fetched using a tool and all rules passed.");
+
+        DocumentAiSummaryResponseDTO response = documentService.generateAiToolSummary(1L);
+
+        assertEquals(response.getDocumentId(), Long.valueOf(1L));
+        assertEquals(response.getAiSummaryStatus(), AiSummaryStatus.COMPLETED);
+        assertEquals(response.getSummary(),
+                "The PAN verification report was fetched using a tool and all rules passed.");
+        assertNotNull(response.getGeneratedAt());
+        assertEquals(documentEntity.getAiSummaryStatus(), AiSummaryStatus.COMPLETED.name());
+        assertEquals(documentEntity.getAiSummary(),
+                "The PAN verification report was fetched using a tool and all rules passed.");
+        verify(aiVerificationSummaryService)
+                .generateSummaryWithTool(any(Long.class), any(DocumentVerificationReportTool.class));
+        verify(documentAuditHistoryRepository).save(any(DocumentAuditHistoryEntity.class));
+    }
+
+    @Test
+    public void getAuditHistoryReturnsDocumentAuditEvents() {
+        DocumentEntity documentEntity = uploadedDocumentEntity();
+        DocumentAuditHistoryEntity auditHistory = new DocumentAuditHistoryEntity();
+        auditHistory.setAuditKey(10L);
+        auditHistory.setDocumentKey(1L);
+        auditHistory.setEventType("VERIFICATION");
+        auditHistory.setEventStatus("PASSED");
+        auditHistory.setScore(1.0);
+        auditHistory.setSummary("3 of 3 verification rules passed");
+        auditHistory.setDetails("PAN_NUMBER: PASSED - PAN number format should be present");
+        auditHistory.setCreatedAt(java.time.Instant.now());
+        when(documentRepository.findById(1L)).thenReturn(Optional.of(documentEntity));
+        when(documentAuditHistoryRepository.findByDocumentKeyOrderByCreatedAtDesc(1L))
+                .thenReturn(List.of(auditHistory));
+
+        List<DocumentAuditHistoryResponseDTO> response = documentService.getAuditHistory(1L);
+
+        assertEquals(response.size(), 1);
+        assertEquals(response.get(0).getAuditId(), Long.valueOf(10L));
+        assertEquals(response.get(0).getDocumentId(), Long.valueOf(1L));
+        assertEquals(response.get(0).getEventStatus(), "PASSED");
+        assertEquals(response.get(0).getScore(), 1.0);
+        assertEquals(response.get(0).getSummary(), "3 of 3 verification rules passed");
+        verify(documentAuditHistoryRepository).findByDocumentKeyOrderByCreatedAtDesc(1L);
     }
 
     private DocumentEntity uploadedDocumentEntity() {
